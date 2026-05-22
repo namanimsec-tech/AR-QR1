@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Burger AR Menu</title>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #D4A843;
+      --gold-light: #F0C968;
+      --dark: #0E0B07;
+      --dark-card: #1A1509;
+      --text: #F5EDD6;
+      --muted: #9A8A6A;
+      --red: #C0392B;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grain texture ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 10px;
+      border-bottom: 1px solid rgba(212,168,67,0.15);
+    }
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .badge {
+      font-size: 0.65rem;
+      background: var(--gold);
+      color: var(--dark);
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Model viewer wrapper ── */
+    .viewer-wrap {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      height: 54vw;
+      max-height: 340px;
+      background: radial-gradient(ellipse at 50% 60%, #2a1e08 0%, #0E0B07 70%);
+      overflow: hidden;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      --poster-color: transparent;
+      background: transparent;
+    }
+
+    /* Glow ring under model */
+    .viewer-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(212,168,67,0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* AR button override */
+    model-viewer::part(default-ar-button) {
+      display: none; /* we use our own button */
+    }
+
+    /* ── Info card ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      margin: 0 16px;
+      background: var(--dark-card);
+      border: 1px solid rgba(212,168,67,0.18);
+      border-radius: 12px;
+      padding: 20px 20px 16px;
+      transform: translateY(-18px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    .item-category {
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .item-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      font-weight: 900;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .item-desc {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .price {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .tags {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: 1px solid rgba(212,168,67,0.3);
+      color: var(--muted);
+    }
+
+    /* ── AR Button ── */
+    .ar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .ar-btn:active {
+      background: var(--gold-light);
+      transform: scale(0.97);
+    }
+
+    .ar-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Nutrition strip ── */
+    .nutrition {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-around;
+      padding: 16px 24px;
+      border-top: 1px solid rgba(212,168,67,0.1);
+      margin: 0 16px;
+    }
+
+    .nut-item {
+      text-align: center;
+    }
+
+    .nut-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .nut-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 20px 16px 32px;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(154,138,106,0.4);
+    }
+
+    /* ── AR not supported message ── */
+    .no-ar-msg {
+      display: none;
+      margin: 0 16px 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: rgba(192,57,43,0.15);
+      border: 1px solid rgba(192,57,43,0.3);
+      color: #e07b6f;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ── Subtle floating animation on model ── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <span class="brand">&#9670; The Grill House</span>
+    <span class="badge">AR Menu</span>
+  </div>
+
+  <div class="viewer-wrap">
+    <model-viewer
+      id="burger-viewer"
+      src="https://namanimsec-tech.github.io/AR-QR1/realistic_burger.glb"
+      alt="Realistic Burger 3D Model"
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="1000"
+      rotation-per-second="20deg"
+      shadow-intensity="1"
+      shadow-softness="0.8"
+      exposure="1.1"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      ar-scale="fixed"
+      ios-src="https://namanimsec-tech.github.io/AR-QR1/realistic_burger.glb"
+    ></model-viewer>
+  </div>
+
+  <div class="card">
+    <p class="item-category">Signature Burger</p>
+    <h1 class="item-name">Classic<br/>Smash Burger</h1>
+    <p class="item-desc">
+      Double smashed beef patty, aged cheddar, house pickles, caramelised onion &amp; our signature umami sauce — stacked on a toasted brioche bun.
+    </p>
+    <div class="meta-row">
+      <span class="price">₹349</span>
+      <div class="tags">
+        <span class="tag">Bestseller</span>
+        <span class="tag">Non-Veg</span>
+      </div>
+    </div>
+
+    <button class="ar-btn" id="ar-btn" onclick="launchAR()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 8V4a1 1 0 0 1 1-1h4"/>
+        <path d="M2 16v4a1 1 0 0 0 1 1h4"/>
+        <path d="M22 8V4a1 1 0 0 0-1-1h-4"/>
+        <path d="M22 16v4a1 1 0 0 1-1 1h-4"/>
+        <path d="M7 12h2l2 3 2-6 2 3h2"/>
+      </svg>
+      View on Your Table in AR
+    </button>
+  </div>
+
+  <div class="no-ar-msg" id="no-ar-msg">
+    AR is not supported on this browser. Try Chrome on Android or Safari on iOS.
+  </div>
+
+  <div class="nutrition">
+    <div class="nut-item">
+      <div class="nut-val">620</div>
+      <div class="nut-label">Calories</div>
+    </div>
+    <div class="nut-item">
+      <div class="nut-val">34g</div>
+      <div class="nut-label">Protein</div>
+    </div>
+    <div class="nut-item">
+      <div class="nut-val">42g</div>
+      <div class="nut-label">Carbs</div>
+    </div>
+    <div class="nut-item">
+      <div class="nut-val">28g</div>
+      <div class="nut-label">Fat</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Scan QR code at your table &nbsp;·&nbsp; Powered by WebXR
+  </div>
+
+  <script>
+    const viewer = document.getElementById('burger-viewer');
+    const arBtn = document.getElementById('ar-btn');
+    const noArMsg = document.getElementById('no-ar-msg');
+
+    function launchAR() {
+      if (viewer.canActivateAR) {
+        viewer.activateAR();
+      } else {
+        noArMsg.style.display = 'block';
+        arBtn.style.opacity = '0.5';
+        arBtn.textContent = 'AR Not Supported on This Device';
+      }
+    }
+
+    // Check AR support on load
+    viewer.addEventListener('load', () => {
+      if (!viewer.canActivateAR) {
+        arBtn.style.opacity = '0.6';
+      }
+    });
+  </script>
+
+</body>
+</html>
